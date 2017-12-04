@@ -1,0 +1,108 @@
+#For AMD Graphics card
+
+wifi-menu
+#This file is entirely in development... Dont use it yet
+echo This file is entirely in development... Dont use it yet
+/bin/bash
+cfdisk /dev/sda
+fdisk -l
+#Considering swap as sda1 and root as sda2
+mkfs.ext4 /dev/sda2
+mount /dev/sda2 /mnt
+mkswap /dev/sda1
+swapon /dev/sda1
+
+# -----------------------------------------------------------------
+#Downloading and Installing the base system
+# -----------------------------------------------------------------
+#Following part requires huge file to be downloaded more than 200MB
+pacstrap /mnt base base-devel
+
+# -----------------------------------------------------------------
+#Configuring installation
+# -----------------------------------------------------------------
+arch-chroot /mnt
+#following changes the root password
+passwd
+
+#Following portion is related with locale generation
+#Sets as US in this case
+echo /etc/locale.gen
+echo en_US ISO-8859-1 >> /etc/locale.gen
+locale.gen
+
+#Following portion sets the timezone
+#Sets as Canada by default
+cd /usr/share/zoneinfo
+cd Canada
+ln -s /usr/share/zoneinfo/canada/Eastern /etc/localtime
+
+#Following portion sets hostname
+#Sets to 'hostname' be default
+echo hostname > /etc/hostname
+
+# -----------------------------------------------------------------
+#Installing the base system
+# -----------------------------------------------------------------
+#Following portion will download and install grub bootloader
+#It will be installed at /dev/sda by default
+pacman -S grub-bios
+
+#Following portion generates the init file
+mkinitcpio -p linux
+
+#Following generates Grub configuration
+grub-mkconfig -o /boot/grub/grub.cfg
+
+#Following Portion generates file containing info about partitions called fstab
+genfstab /mnt >> /mnt/etc/fstab
+
+#Time to unmount previously mounted /mnt because not needed to do so
+umount /mnt
+
+#Now reboot
+reboot
+
+# -----------------------------------------------------------------
+#From this point, Arch base is successfully installed
+#And all thats left is to install extras
+#Including Desktop environment
+# -----------------------------------------------------------------
+
+#Following portion switches to root access for less conflicts
+su root
+
+# -----------------------------------------------------------------
+#Creating a user account
+# -----------------------------------------------------------------
+
+#Following portion creates a new user
+#New user will be simply named user
+useradd -m -g users -s /bin/bash user
+passwd user
+
+#Following portion adds the user 'user' to sudoers
+#This ensures the user gets sudo access
+
+
+
+# -----------------------------------------------------------------
+#Preparing and installing Desktop environment
+# -----------------------------------------------------------------
+
+#Following portion installs Display server
+pacman -S xorg-server xorg-server-utils --xorg-xinit
+
+#Following portion installs Grpahics Driver
+pacman -S xf86-video-amdgpu
+
+#Following portion installs Display Manager
+#LXDE Display Manager will be default here...
+pacman -S lxdm
+
+#Following portion installs Desktop Environments
+#Gnome is selected here
+pacman -S gnome gnome-extra
+systemctl enable lxdm
+
+#Now its time to reboot again...
