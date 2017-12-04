@@ -106,3 +106,4 @@ pacman -S gnome gnome-extra
 systemctl enable lxdm
 
 #Now its time to reboot again...
+reboot
